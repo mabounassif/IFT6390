@@ -1,0 +1,62 @@
+import numpy as np
+
+from devoirs.d2.code.mlp_helpers import fprop, bprop
+from devoirs.d2.code.verification_helpers import check_grad_b1, check_grad_w1, check_grad_b2, check_grad_w2
+from devoirs.d2.code.mlp import MLP
+
+
+class MLPBatch(MLP):
+    def train(self, train, target, lamdas, learning_rate, k):
+        self.total_grad = 0
+        split_indices = list(range(k, train.shape[0], k))
+        train_splits = np.split(train, split_indices)
+        target_splits = np.split(target, split_indices)
+
+        for i in list(range(0, len(train_splits) - 1, 1)):
+            x = train_splits[i]
+            y = target_splits[i]
+
+            fprop_r = fprop(self.W1, self.W2, self.b1, self.b2, x, y)
+            bprop_r = bprop(fprop_r, self.W1, self.W2, self.b1, self.b2, x, y, self.m)
+
+            self.total_grad += np.sum(bprop_r['grad_oa'] / k)
+
+            regularization = lamdas[0, 0] * self.W1.sum() + \
+                             lamdas[0, 1] * np.square(self.W1).sum() + \
+                             lamdas[1, 0] * self.W2.sum() + \
+                             lamdas[1, 1] * np.square(self.W2).sum()
+
+            self.W1 -= (learning_rate * (bprop_r['grad_w1'] + regularization) / k)
+            self.W2 -= (learning_rate * (bprop_r['grad_w2'] + regularization) / k)
+
+            axis = 1
+            self.b1 -= (learning_rate * (np.sum(bprop_r['grad_b1'], axis=axis) + regularization))
+            self.b2 -= (learning_rate * (np.sum(bprop_r['grad_b2'], axis=axis) + regularization))
+
+    def verify_gradient(self, train, target, k):
+        x = train[:k]
+        y = target[:k]
+
+        fprop_r = fprop(self.W1, self.W2, self.b1, self.b2, x, y)
+        bprop_r = bprop(fprop_r, self.W1, self.W2, self.b1, self.b2, x, y, self.m)
+
+        L = np.sum(fprop_r['loss'])
+
+        grad_w2_diff = check_grad_w2(L, self.W1, self.W2, self.b1, self.b2, x, y, self.epsilon)
+        grad_w1_diff = check_grad_w1(L, self.W1, self.W2, self.b1, self.b2, x, y, self.epsilon)
+        grad_b2_diff = check_grad_b2(L, self.W1, self.W2, self.b1, self.b2, x, y, self.epsilon)
+        grad_b1_diff = check_grad_b1(L, self.W1, self.W2, self.b1, self.b2, x, y, self.epsilon)
+
+        grad_ratio_b1 = (bprop_r['grad_b1'] + self.epsilon) / (grad_b1_diff + self.epsilon)
+        grad_ratio_w1 = (bprop_r['grad_w1'] + self.epsilon) / (grad_w1_diff + self.epsilon)
+        grad_ratio_b2 = (bprop_r['grad_b2'] + self.epsilon) / (grad_b2_diff + self.epsilon)
+        grad_ratio_w2 = (bprop_r['grad_w2'] + self.epsilon) / (grad_w2_diff + self.epsilon)
+
+        def check_grad_ratio(ratio):
+            return (ratio > 0.99).all() and (ratio < 1.01).all()
+
+        if check_grad_ratio(grad_ratio_b2) and check_grad_ratio(grad_ratio_w2) and check_grad_ratio(
+                grad_ratio_b1) and check_grad_ratio(grad_ratio_w1):
+            print('Gradient verified for k={0} ✓'.format(k))
+        else:
+            print('Gradient error for k={0} X'.format(k))
