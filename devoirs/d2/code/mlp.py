@@ -5,8 +5,6 @@ import json
 
 import matplotlib.pyplot as plt
 import pylab
-import datetime
-
 
 from code.verification_helpers import check_grad_w2, check_grad_b2, check_grad_w1, check_grad_b1
 from code.mlp_helpers import fprop, bprop
@@ -16,7 +14,15 @@ class MLP:
     def __init__(self, d, m, dh, epsilon, show_epoch=False, save_datapoints=False):
         self.save_datapoints = save_datapoints
         self.total_grad = 0
-        self.data_points = []
+        self.data_points = {
+            'train_loss': [],
+            'train_error': [],
+            'valid_loss': [],
+            'valid_error': [],
+            'test_loss': [],
+            'test_error': []
+        }
+
         self.m = m
         self.epsilon = epsilon
         self.d = d
@@ -73,27 +79,23 @@ class MLP:
 
     def calculate_and_show_errors(self, train, train_target, valid, valid_target, test, test_target):
         if self.save_datapoints:
-            data_point = {}
-
             # Calcule du taux d'erreur train
             fprop_train = fprop(self.W1, self.W2, self.b1, self.b2, train, train_target)
 
-            data_point['train_loss'] = np.sum(fprop_train['loss'])
-            data_point['train_error'] = self.calculate_error(fprop_train['os'], train_target)
+            self.data_points['train_loss'].append(np.sum(fprop_train['loss']))
+            self.data_points['train_error'].append(self.calculate_error(fprop_train['os'], train_target))
 
             # Calcule du taux d'erreur valid
             fprop_valid = fprop(self.W1, self.W2, self.b1, self.b2, valid, valid_target)
 
-            data_point['valid_loss'] = np.sum(fprop_valid['loss'])
-            data_point['valid_error'] = self.calculate_error(fprop_valid['os'], valid_target)
+            self.data_points['valid_loss'].append(np.sum(fprop_valid['loss']))
+            self.data_points['valid_error'].append(self.calculate_error(fprop_valid['os'], valid_target))
 
             # Calcule du taux d'erreur test
             fprop_test = fprop(self.W1, self.W2, self.b1, self.b2, test, test_target)
 
-            data_point['test_loss'] = np.sum(fprop_test['loss'])
-            data_point['test_error'] = self.calculate_error(fprop_test['os'], test_target)
-
-            self.data_points.append(data_point)
+            self.data_points['test_loss'].append(np.sum(fprop_test['loss']))
+            self.data_points['test_error'].append(self.calculate_error(fprop_test['os'], test_target))
 
     def train(self, train, target, lamdas, learning_rate, k=None, iterations=100, valid=None, valid_target=None, test=None, test_target=None):
         cursor = 0
@@ -151,9 +153,7 @@ class MLP:
             self.b2 -= np.sum((learning_rate * total_grad_b2), axis=1)
 
             if self.save_datapoints:
-                now = datetime.datetime.now()
-
-                f = open('{0}_datapoints'.format(now.strftime("%Y-%m-%d %H:%M")), 'a+')
+                f = open('datapoints.json', 'w+')
                 f.write(json.dumps(self.data_points))
                 f.close()
 

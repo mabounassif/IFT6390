@@ -5,7 +5,6 @@ from code.mlp_helpers import fprop, bprop
 from code.verification_helpers import check_grad_b1, check_grad_w1, check_grad_b2, check_grad_w2
 from code.mlp import MLP
 
-import datetime
 import json
 
 
@@ -50,10 +49,10 @@ class MLPBatch(MLP):
                 if self.save_datapoints:
                     self.calculate_and_show_errors(train, target, valid, valid_target, test, test_target)
 
-        if self.save_datapoints:
-            now = datetime.datetime.now()
+                cursor = cursor*batch_size - train.shape[0]
 
-            f = open('{0}_datapoints'.format(now.strftime("%Y-%m-%d %H:%M")), 'a+')
+        if self.save_datapoints:
+            f = open('datapoints.json', 'w+')
             f.write(json.dumps(self.data_points))
             f.close()
 
