@@ -39,9 +39,9 @@ class MLPBatch(MLP):
             self.b2 -= np.sum((learning_rate * bprop_r['grad_b2']), axis=axis)
 
             cursor += 1
-            if cursor*batch_size > train.shape[0] and self.show_epoch:
+            if cursor*batch_size >= train.shape[0] and self.show_epoch:
                 elapsed_time = time.process_time() - t
-                print('1 epoch time: ~{0} ms'.format(elapsed_time))
+                print('1 epoch time: ~{0} s'.format(elapsed_time))
 
     def verify_gradient(self, train, target, k):
         x = train[:k]

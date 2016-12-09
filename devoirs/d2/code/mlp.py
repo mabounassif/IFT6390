@@ -11,7 +11,6 @@ from code.mlp_helpers import fprop, bprop
 
 class MLP:
     def __init__(self, d, m, dh, epsilon, show_epoch=False):
-        print('start')
         self.total_grad = 0
         self.m = m
         self.epsilon = epsilon
@@ -25,8 +24,6 @@ class MLP:
             1 / math.sqrt(d),
             (dh, d))
         self.b1 = np.zeros((dh, 1))
-
-        print(self.b1.shape)
 
         self.W2 = np.random.uniform(
             -1 / math.sqrt(dh),
@@ -62,6 +59,9 @@ class MLP:
             else:
                 print('Gradient error for element {0} X'.format(i))
 
+    def calculate_and_show_errors(self, train, train_target, valid, valid_target, test, test_target):
+        pass
+
     def train(self, train, target, lamdas, learning_rate, k=None, iterations=100):
         cursor = 0
         self.total_grad = 0
@@ -94,9 +94,9 @@ class MLP:
                 total_grad_oa += bprop_r['grad_oa']
 
                 cursor += 1
-                if cursor > train.shape[0] and self.show_epoch:
+                if cursor >= train.shape[0] and self.show_epoch:
                     elapsed_time = time.process_time() - t
-                    print('1 epoch time: ~{0} ms'.format(elapsed_time))
+                    print('1 epoch time: ~{0} s'.format(elapsed_time))
 
                 cursor = (cursor%train.shape[0])
 
