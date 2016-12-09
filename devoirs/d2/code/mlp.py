@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import time
 
 import matplotlib.pyplot as plt
 import pylab
@@ -9,12 +10,14 @@ from code.mlp_helpers import fprop, bprop
 
 
 class MLP:
-    def __init__(self, d, m, dh, epsilon):
+    def __init__(self, d, m, dh, epsilon, show_epoch=False):
+        print('start')
         self.total_grad = 0
         self.m = m
         self.epsilon = epsilon
         self.d = d
         self.dh = dh
+        self.show_epoch = show_epoch
 
         # Initialisation des paramètres
         self.W1 = np.random.uniform(
@@ -22,6 +25,8 @@ class MLP:
             1 / math.sqrt(d),
             (dh, d))
         self.b1 = np.zeros((dh, 1))
+
+        print(self.b1.shape)
 
         self.W2 = np.random.uniform(
             -1 / math.sqrt(dh),
@@ -60,6 +65,7 @@ class MLP:
     def train(self, train, target, lamdas, learning_rate, k=None, iterations=100):
         cursor = 0
         self.total_grad = 0
+        t = time.process_time()
 
         if k is None:
             batch_size = train.shape[0]
@@ -88,6 +94,10 @@ class MLP:
                 total_grad_oa += bprop_r['grad_oa']
 
                 cursor += 1
+                if cursor > train.shape[0] and self.show_epoch:
+                    elapsed_time = time.process_time() - t
+                    print('1 epoch time: ~{0} ms'.format(elapsed_time))
+
                 cursor = (cursor%train.shape[0])
 
             self.total_grad += np.sum(total_grad_oa)

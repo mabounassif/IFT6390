@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 from code.mlp_helpers import fprop, bprop
 from code.verification_helpers import check_grad_b1, check_grad_w1, check_grad_b2, check_grad_w2
@@ -7,6 +8,7 @@ from code.mlp import MLP
 
 class MLPBatch(MLP):
     def train(self, train, target, lamdas, learning_rate, k=None, iterations=100):
+        t = time.process_time()
         self.total_grad = 0
         cursor = 0
         axis = 1
@@ -37,6 +39,9 @@ class MLPBatch(MLP):
             self.b2 -= np.sum((learning_rate * bprop_r['grad_b2']), axis=axis)
 
             cursor += 1
+            if cursor*batch_size > train.shape[0] and self.show_epoch:
+                elapsed_time = time.process_time() - t
+                print('1 epoch time: ~{0} ms'.format(elapsed_time))
 
     def verify_gradient(self, train, target, k):
         x = train[:k]
