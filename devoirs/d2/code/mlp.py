@@ -4,8 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pylab
 
-from devoirs.d2.code.verification_helpers import check_grad_w2, check_grad_b2, check_grad_w1, check_grad_b1
-from devoirs.d2.code.mlp_helpers import fprop, bprop
+from code.verification_helpers import check_grad_w2, check_grad_b2, check_grad_w1, check_grad_b1
+from code.mlp_helpers import fprop, bprop
 
 
 class MLP:
@@ -154,4 +154,3 @@ class MLP:
         plt.grid()
         plt.legend(loc='lower right')
         plt.title(title)
-        plt.savefig(title)

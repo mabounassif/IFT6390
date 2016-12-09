@@ -1,5 +1,5 @@
 import numpy as np
-from devoirs.d2.code.mlp_helpers import fprop
+from code.mlp_helpers import fprop
 
 
 def check_grad_w2(L, W1, W2, b1, b2, x, y, epsilon):

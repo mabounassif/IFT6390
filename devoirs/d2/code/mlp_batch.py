@@ -1,8 +1,8 @@
 import numpy as np
 
-from devoirs.d2.code.mlp_helpers import fprop, bprop
-from devoirs.d2.code.verification_helpers import check_grad_b1, check_grad_w1, check_grad_b2, check_grad_w2
-from devoirs.d2.code.mlp import MLP
+from code.mlp_helpers import fprop, bprop
+from code.verification_helpers import check_grad_b1, check_grad_w1, check_grad_b2, check_grad_w2
+from code.mlp import MLP
 
 
 class MLPBatch(MLP):
