@@ -6,32 +6,37 @@ from devoirs.d2.code.mlp import MLP
 
 
 class MLPBatch(MLP):
-    def train(self, train, target, lamdas, learning_rate, k):
+    def train(self, train, target, lamdas, learning_rate, k=None, iterations=100):
         self.total_grad = 0
-        split_indices = list(range(k, train.shape[0], k))
-        train_splits = np.split(train, split_indices)
-        target_splits = np.split(target, split_indices)
+        cursor = 0
+        axis = 1
 
-        for i in list(range(0, len(train_splits) - 1, 1)):
-            x = train_splits[i]
-            y = target_splits[i]
+        if k is None:
+            batch_size = train.shape[0]
+        else:
+            batch_size = k
+
+        for _ in range(iterations):
+            x = np.roll(train, -1*cursor*batch_size, axis=0)[:batch_size]
+            y = np.roll(target, -1*cursor*batch_size, axis=0)[:batch_size]
 
             fprop_r = fprop(self.W1, self.W2, self.b1, self.b2, x, y)
             bprop_r = bprop(fprop_r, self.W1, self.W2, self.b1, self.b2, x, y, self.m)
 
-            self.total_grad += np.sum(bprop_r['grad_oa'] / k)
+            self.total_grad += np.sum(bprop_r['grad_oa'])
 
             regularization = lamdas[0, 0] * self.W1.sum() + \
                              lamdas[0, 1] * np.square(self.W1).sum() + \
                              lamdas[1, 0] * self.W2.sum() + \
                              lamdas[1, 1] * np.square(self.W2).sum()
 
-            self.W1 -= (learning_rate * (bprop_r['grad_w1'] + regularization) / k)
-            self.W2 -= (learning_rate * (bprop_r['grad_w2'] + regularization) / k)
+            self.W1 -= (learning_rate * (bprop_r['grad_w1'] + regularization))
+            self.W2 -= (learning_rate * (bprop_r['grad_w2'] + regularization))
 
-            axis = 1
-            self.b1 -= (learning_rate * (np.sum(bprop_r['grad_b1'], axis=axis) + regularization))
-            self.b2 -= (learning_rate * (np.sum(bprop_r['grad_b2'], axis=axis) + regularization))
+            self.b1 -= np.sum((learning_rate * bprop_r['grad_b1']), axis=axis)
+            self.b2 -= np.sum((learning_rate * bprop_r['grad_b2']), axis=axis)
+
+            cursor += 1
 
     def verify_gradient(self, train, target, k):
         x = train[:k]

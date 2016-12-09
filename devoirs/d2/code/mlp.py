@@ -1,7 +1,6 @@
 import math
 import numpy as np
 
-import matplotlib
 import matplotlib.pyplot as plt
 import pylab
 
@@ -58,42 +57,51 @@ class MLP:
             else:
                 print('Gradient error for element {0} X'.format(i))
 
-    def batch_train(self, train, target, lamdas, learning_rate, k):
+    def train(self, train, target, lamdas, learning_rate, k=None, iterations=100):
+        cursor = 0
         self.total_grad = 0
 
-        split_indices = list(range(k, train.shape[0], k))
-        train_splits = np.split(train, split_indices)
-        target_splits = np.split(target, split_indices)
+        if k is None:
+            batch_size = train.shape[0]
+        else:
+            batch_size = k
 
-        for i in list(range(0, len(train_splits) - 1, 1)):
-            x = train_splits[i]
-            y = target_splits[i]
+        for _ in range(iterations):
+            total_grad_w1 = 0
+            total_grad_w2 = 0
+            total_grad_b1 = 0
+            total_grad_b2 = 0
+            total_grad_oa = 0
 
-            self.train(x, y, lamdas, learning_rate)
+            for _ in range(batch_size):
+                x = train[cursor]
+                y = target[cursor]
 
-    def train(self, train, target, lamdas, learning_rate, iterations=None):
-        for i in list(range(train.shape[0])):
-            if iterations and i == iterations:
-                break
+                fprop_r = fprop(self.W1, self.W2, self.b1, self.b2, x, y)
+                bprop_r = bprop(fprop_r, self.W1, self.W2, self.b1, self.b2, x, y, self.m)
 
-            x = train[i]
-            y = target[i]
+                self.total_grad += np.sum(bprop_r['grad_oa'])
+                total_grad_w1 += bprop_r['grad_w1']
+                total_grad_w2 += bprop_r['grad_w2']
+                total_grad_b1 += bprop_r['grad_b1']
+                total_grad_b2 += bprop_r['grad_b2']
+                total_grad_oa += bprop_r['grad_oa']
 
-            fprop_r = fprop(self.W1, self.W2, self.b1, self.b2, x, y)
-            bprop_r = bprop(fprop_r, self.W1, self.W2, self.b1, self.b2, x, y, self.m)
+                cursor += 1
+                cursor = (cursor%train.shape[0])
 
-            self.total_grad += np.sum(bprop_r['grad_oa'])
+            self.total_grad += np.sum(total_grad_oa)
 
             regularization = lamdas[0, 0] * self.W1.sum() + \
                          lamdas[0, 1] * np.square(self.W1).sum() + \
                          lamdas[1, 0] * self.W2.sum() + \
                          lamdas[1, 1] * np.square(self.W2).sum()
 
-            self.W1 -= (learning_rate * bprop_r['grad_w1'] + regularization)
-            self.W2 -= (learning_rate * bprop_r['grad_w2'] + regularization)
+            self.W1 -= (learning_rate * (total_grad_w1 + regularization))
+            self.W2 -= (learning_rate * (total_grad_w2 + regularization))
 
-            self.b1 -= (learning_rate * bprop_r['grad_b1'] + regularization)
-            self.b2 -= (learning_rate * bprop_r['grad_b2'] + regularization)
+            self.b1 -= np.sum((learning_rate * total_grad_b1), axis=1)
+            self.b2 -= np.sum((learning_rate * total_grad_b2), axis=1)
 
     def show_decision_regions(self, train_data, title='region de décision'):
         def combine(*seqin):
