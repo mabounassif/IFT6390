@@ -69,7 +69,7 @@ class MLP:
         error_numbs = np.count_nonzero(diff)
         total = len(target)
 
-        return (error_numbs / total)
+        return 100*(error_numbs / total)
 
     def calculate_and_show_errors(self, train, train_target, valid, valid_target, test, test_target):
         if self.save_datapoints:
