@@ -5,9 +5,12 @@ from code.mlp_helpers import fprop, bprop
 from code.verification_helpers import check_grad_b1, check_grad_w1, check_grad_b2, check_grad_w2
 from code.mlp import MLP
 
+import datetime
+import json
+
 
 class MLPBatch(MLP):
-    def train(self, train, target, lamdas, learning_rate, k=None, iterations=100):
+    def train(self, train, target, lamdas, learning_rate, k=None, iterations=100, valid=None, valid_target=None, test=None, test_target=None):
         t = time.process_time()
         self.total_grad = 0
         cursor = 0
@@ -39,9 +42,20 @@ class MLPBatch(MLP):
             self.b2 -= np.sum((learning_rate * bprop_r['grad_b2']), axis=axis)
 
             cursor += 1
-            if cursor*batch_size >= train.shape[0] and self.show_epoch:
-                elapsed_time = time.process_time() - t
-                print('1 epoch time: ~{0} s'.format(elapsed_time))
+            if cursor*batch_size >= train.shape[0]:
+                if self.show_epoch:
+                    elapsed_time = time.process_time() - t
+                    print('1 epoch time: ~{0} s'.format(elapsed_time))
+
+                if self.save_datapoints:
+                    self.calculate_and_show_errors(train, target, valid, valid_target, test, test_target)
+
+        if self.save_datapoints:
+            now = datetime.datetime.now()
+
+            f = open('{0}_datapoints'.format(now.strftime("%Y-%m-%d %H:%M")), 'a+')
+            f.write(json.dumps(self.data_points))
+            f.close()
 
     def verify_gradient(self, train, target, k):
         x = train[:k]

@@ -1,17 +1,22 @@
 import math
 import numpy as np
 import time
+import json
 
 import matplotlib.pyplot as plt
 import pylab
+import datetime
+
 
 from code.verification_helpers import check_grad_w2, check_grad_b2, check_grad_w1, check_grad_b1
 from code.mlp_helpers import fprop, bprop
 
 
 class MLP:
-    def __init__(self, d, m, dh, epsilon, show_epoch=False):
+    def __init__(self, d, m, dh, epsilon, show_epoch=False, save_datapoints=False):
+        self.save_datapoints = save_datapoints
         self.total_grad = 0
+        self.data_points = []
         self.m = m
         self.epsilon = epsilon
         self.d = d
@@ -59,10 +64,38 @@ class MLP:
             else:
                 print('Gradient error for element {0} X'.format(i))
 
-    def calculate_and_show_errors(self, train, train_target, valid, valid_target, test, test_target):
-        pass
+    def calculate_error(self, os, target):
+        diff = target - np.argmax(os, axis=0)
+        error_numbs = np.count_nonzero(diff)
+        total = len(target)
 
-    def train(self, train, target, lamdas, learning_rate, k=None, iterations=100):
+        return (error_numbs / total)
+
+    def calculate_and_show_errors(self, train, train_target, valid, valid_target, test, test_target):
+        if self.save_datapoints:
+            data_point = {}
+
+            # Calcule du taux d'erreur train
+            fprop_train = fprop(self.W1, self.W2, self.b1, self.b2, train, train_target)
+
+            data_point['train_loss'] = np.sum(fprop_train['loss'])
+            data_point['train_error'] = self.calculate_error(fprop_train['os'], train_target)
+
+            # Calcule du taux d'erreur valid
+            fprop_valid = fprop(self.W1, self.W2, self.b1, self.b2, valid, valid_target)
+
+            data_point['valid_loss'] = np.sum(fprop_valid['loss'])
+            data_point['valid_error'] = self.calculate_error(fprop_valid['os'], valid_target)
+
+            # Calcule du taux d'erreur test
+            fprop_test = fprop(self.W1, self.W2, self.b1, self.b2, test, test_target)
+
+            data_point['test_loss'] = np.sum(fprop_test['loss'])
+            data_point['test_error'] = self.calculate_error(fprop_test['os'], test_target)
+
+            self.data_points.append(data_point)
+
+    def train(self, train, target, lamdas, learning_rate, k=None, iterations=100, valid=None, valid_target=None, test=None, test_target=None):
         cursor = 0
         self.total_grad = 0
         t = time.process_time()
@@ -94,9 +127,13 @@ class MLP:
                 total_grad_oa += bprop_r['grad_oa']
 
                 cursor += 1
-                if cursor >= train.shape[0] and self.show_epoch:
-                    elapsed_time = time.process_time() - t
-                    print('1 epoch time: ~{0} s'.format(elapsed_time))
+                if cursor >= train.shape[0]:
+                    if self.show_epoch:
+                        elapsed_time = time.process_time() - t
+                        print('1 epoch time: ~{0} s'.format(elapsed_time))
+
+                    if self.save_datapoints:
+                        self.calculate_and_show_errors(train, target, valid, valid_target, test, test_target)
 
                 cursor = (cursor%train.shape[0])
 
@@ -112,6 +149,13 @@ class MLP:
 
             self.b1 -= np.sum((learning_rate * total_grad_b1), axis=1)
             self.b2 -= np.sum((learning_rate * total_grad_b2), axis=1)
+
+            if self.save_datapoints:
+                now = datetime.datetime.now()
+
+                f = open('{0}_datapoints'.format(now.strftime("%Y-%m-%d %H:%M")), 'a+')
+                f.write(json.dumps(self.data_points))
+                f.close()
 
     def show_decision_regions(self, train_data, title='region de décision'):
         def combine(*seqin):
