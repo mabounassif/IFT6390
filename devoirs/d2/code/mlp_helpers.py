@@ -17,7 +17,7 @@ def fprop(W1, W2, b1, b2, x, y=None):
         loss = None
     else:
         y = y.astype(int)
-        loss = -1 * np.log(os[np.transpose(y), 0])
+        loss = -1 * np.log(np.sum(np.multiply(os,np.matrix(np.eye(os.shape[0]))[:, y]), axis=0))
 
     return {
         'ha': ha,

@@ -1,1 +1,1 @@
-{"test_loss": [100357.38275579007], "valid_error": [6.7], "valid_loss": [69810.76212550055], "train_loss": [400215.14830798615], "train_error": [7.382], "test_error": [7.26]}
+{"test_error": [7.22], "test_loss": [2484.2702359987034], "train_loss": [12756.748549518099], "train_error": [7.466], "valid_loss": [2369.7747106486495], "valid_error": [6.64]}

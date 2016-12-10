@@ -49,7 +49,7 @@ class MLPBatch(MLP):
                 if self.save_datapoints:
                     self.calculate_and_show_errors(train, target, valid, valid_target, test, test_target)
 
-                cursor = cursor*batch_size - train.shape[0]
+                cursor = 0
 
         if self.save_datapoints:
             f = open('datapoints.json', 'w+')
